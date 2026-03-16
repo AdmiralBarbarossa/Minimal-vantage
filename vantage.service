@@ -1,0 +1,12 @@
+[Unit]
+Description=ThinkPad Vantage Hardware Persistence
+ConditionPathExists=/etc/vantage.conf
+After=systemd-modules-load.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/vantage-core --restore
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

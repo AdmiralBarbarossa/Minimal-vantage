@@ -52,8 +52,12 @@ Certain features require root access; **in-menu root authentication** —includi
 ### Fedora
 
 ```bash
-sudo dnf copr enable maveonair/jetbrains-mono-nerd-fonts
-sudo dnf install gum pipewire jetbrains-mono-nerd-fonts
+wget https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+unzip JetBrainsMono.zip -d ~/.local/share/fonts
+fc-cache -fv
+rm JetBrainsMono.zip
+
+sudo dnf install gum pipewire
 ```
 
 ### Arch

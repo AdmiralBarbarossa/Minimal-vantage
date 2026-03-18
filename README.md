@@ -29,14 +29,14 @@ Certain features require root access; **in-menu root authentication** —includi
 
 ## Features
 
-* **Battery Conservation:** Set start/stop charging thresholds to prolong battery life with path detection (`BAT0`, `BAT1`, `BATT`).
-* **Hardware Telemetry:** Readouts of Battery Health %, Cycle Counts, and Power Draw (Watts) snapshot.
+* **Battery Conservation:** Set start/stop charging thresholds to prolong battery life with path detection.
+* **Telemetry:** Readouts of Battery Health %, Cycle Counts, and Power Draw (Watts) snapshot.
 * **Thermal/Fan Modes:** Switch between `low-power`, `balanced`, and `performance` ACPI profiles.
-* **Display Control (`wlroots` only):** Adjust resolution and refresh rate via `wlr-randr`. Detects Wayland compositors and hides the option on GNOME/KDE to prevent clutter.
+* **Display Control (`wlroots` only):** Adjust resolution and refresh rate via `wlr-randr`. 
 * **Microphone Privacy:** Instant audio muting via PipeWire.
 * **Radios:** Quick toggles for Wi-Fi and Bluetooth using native kernel `rfkill` without reliance on NetworkManager or BlueZ.
 * **Camera Privacy:** Attempts to load/unload the standard webcam kernel module.
-* **Persistence:** Save settings across reboots, with an installer that supports both `systemd` and non-systemd environments.
+* **Persistence:** Save settings across reboots, with a light installer that supports both `systemd` and non-systemd environments.
 
 > [!NOTE]
 > Newer ThinkPad models utilize Intel IPU6 (MIPI) architecture, and bypasses the internal USB hub; therefore, the `uvcvideo` driver may be absent, causing software toggles in this TUI to appear unresponsive. The actual switch (ThinkShutter) remains functional at the hardware level.
@@ -64,7 +64,7 @@ sudo pacman -S gum pipewire wireplumber ttf-jetbrains-mono-nerd
 ### Ubuntu/Debian
 
 ```bash
-# requires adding the Charmbracelet repository on Debian/Ubuntu
+# requires Charmbracelet repository on Debian/Ubuntu
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
 echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
@@ -107,7 +107,7 @@ The pre-compiled nature of the Charmbracelet’s `gum` prevents custom remapping
 
 Inspired by the [niizam/vantage](https://github.com/niizam/vantage) repository, **Minimal-Vantage** adapts the concept for **ThinkPads** and modern workflows. While the original project targets Lenovo IdeaPads/Legions on legacy X11, this alternative swaps GTK popups (`zenity`) and X11 protocols for terminal-native styling (`gum`) and Wayland support (`wlr-randr`).
 
-Unlike background suites like **TLP** or **auto-cpufreq**, this is an one-shot boot service alternative with no persistent background process; achieves ~5W draw @ 30°C (0 RPM) on 268V Fedora + River with `tuned` and `thermald`
+Unlike background suites like **TLP** or **auto-cpufreq**, this is an one-shot boot service alternative with no persistent background process; already achieves ~5W draw @ 30°C (0 RPM) on 268V Fedora + River with `tuned` and `thermald` without the reliance on such tools. 
 
 ## Contributing & Feedback
 

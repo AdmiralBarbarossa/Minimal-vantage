@@ -52,6 +52,7 @@ Certain features require root access; **in-menu root authentication** —includi
 ### Fedora
 
 ```bash
+sudo dnf copr enable maveonair/jetbrains-mono-nerd-fonts
 sudo dnf install gum pipewire jetbrains-mono-nerd-fonts
 ```
 
@@ -64,12 +65,15 @@ sudo pacman -S gum pipewire wireplumber ttf-jetbrains-mono-nerd
 ### Ubuntu/Debian
 
 ```bash
-# requires Charmbracelet repository on Debian/Ubuntu
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
 echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
+sudo apt update && sudo apt install -y gum pipewire wireplumber
 
-sudo apt update && sudo apt install -y gum pipewire wireplumber fonts-jetbrains-mono
+wget https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+unzip JetBrainsMono.zip -d ~/.local/share/fonts
+fc-cache -fv
+rm JetBrainsMono.zip
 ```
 
 ## Installation

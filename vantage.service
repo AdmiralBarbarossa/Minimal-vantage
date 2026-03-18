@@ -7,6 +7,9 @@ After=systemd-modules-load.service
 Type=oneshot
 ExecStart=/usr/local/bin/vantage-core --restore
 RemainAfterExit=yes
+ProtectHome=yes
+ProtectSystem=full
+NoNewPrivileges=yes
 
 [Install]
 WantedBy=multi-user.target

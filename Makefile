@@ -17,9 +17,9 @@ install:
 		if [ -z "$(DESTDIR)" ]; then \
 			systemctl daemon-reload; \
 			systemctl enable vantage.service; \
-			echo "==> Systemd service enabled."; \
+			echo "Systemd service enabled."; \
 		else \
-			echo "==> Packaging mode (DESTDIR set); skipping systemctl enable."; \
+			echo "Packaging mode (DESTDIR set); skipping systemctl enable."; \
 		fi \
 	else \
 		echo "Non-systemd init detected; skipping service install."; \

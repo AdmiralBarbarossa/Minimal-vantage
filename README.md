@@ -23,7 +23,7 @@ Based on Linux kernel ACPI drivers (Kernel 5.12+) and expected to work on Lenovo
 * **ThinkPad X1 Yoga** (Gen 6+)
 * *Other modern Lenovo models utilizing the `thinkpad_acpi` driver.*
 
-An ideal simple, keyboard driven solution for **`wlroots`** users: remains compatible with **GNOME** and **KDE Plasma** without enforcing `wlr-randr` in `DE` setups.
+An ideal, simple, keyboard driven solution for **`wlroots`** users: remains compatible with **GNOME** and **KDE Plasma** without enforcing `wlr-randr` in Desktop Environment (DE) setups.
 
 Certain features require root access; **in-menu root authentication** —including fingerprints if pre-configured (e.g., PAM/`fprintd` on Fedora)— **is** supported; thereby, visual flow stays consistent.
 
@@ -87,7 +87,7 @@ Upon installation, run `vantage` in terminal. Native `sudo` authentication (incl
 > [!TIP]
 > **Non-Systemd Environments (Void, Artix, Alpine):** The `Makefile` automatically detects the init system and bypass `systemd` service installation; the following persistence methods could help:
 > * Append `/usr/local/bin/vantage-core --restore` to `/etc/rc.local` (Void/runit), an `/etc/local.d/*.start` script (OpenRC), or a root crontab (`@reboot`). 
-> * Configuring `/etc/sudoers` for `NOPASSWD` execution of the core binary, the command `exec sudo /usr/local/bin/vantage-core --restore` (or `exec-once` for Hyprland) can be invoked from the compositor configuration; ***However***, *it ties hardware state to the graphical session rather than the boot sequence!*
+> * By configuring `/etc/sudoers` for `NOPASSWD` execution of the core binary, the command `exec sudo /usr/local/bin/vantage-core --restore` (or `exec-once` for Hyprland) can be invoked from the compositor configuration; ***However***, *it ties hardware state to the graphical session rather than the boot sequence!*
 
 ## Uninstallation
 

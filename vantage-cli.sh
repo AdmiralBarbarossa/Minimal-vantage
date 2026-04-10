@@ -11,7 +11,7 @@ if [ "$(id -u)" -ne 0 ]; then
     fi
 fi
 
-for tool in gum rfkill wpctl; do
+for tool in gum rfkill wpctl awk; do
     if ! command -v "$tool" &> /dev/null; then
         echo "Error: Required dependency '$tool' is not installed."
         exit 1
@@ -146,12 +146,25 @@ while true; do
             ;;
         "󰍹  Set Display Mode")
             if [ "$HASWLR" = true ]; then
-                AVAILMODES=$(awk '/px,/{printf "%s @ %.0f Hz\n", $1, $3}' <<< "$WLROUT" | sort -ur)
-                CHOSENMODE=$(echo "$AVAILMODES" | gum choose --header "Select Display Mode (Esc to go back):")
+                unset MODEMAP
+                unset MENULIST
+                declare -A MODEMAP
+                declare -a MENULIST
+                while read -r RES HZEXACT; do
+                    HZROUND=$(printf "%.0f" "$HZEXACT")
+                    UILABEL="${RES} @ ${HZROUND} Hz"                    
+                    if [[ -n "${MODEMAP[$UILABEL]}" ]]; then
+                        UILABEL="${RES} @ ${HZEXACT} Hz"
+                    fi
+                    
+                    MODEMAP["$UILABEL"]="${RES}@${HZEXACT}"
+                    MENULIST+=("$UILABEL")
+                done < <(awk '/px,/{print $1, $3}' <<< "$WLROUT")
+                CHOSENMODE=$(printf "%s\n" "${MENULIST[@]}" | sort -ur | gum choose --header "Select Display Mode (Esc to go back):")
                 if [ -n "$CHOSENMODE" ]; then
-                    read -r RES _ HZ _ <<< "$CHOSENMODE"
-                    if [[ "$RES" =~ ^[0-9]+x[0-9]+$ ]] && [[ "$HZ" =~ ^[0-9]+$ ]]; then
-                        wlr-randr --output "$DISPOUT" --mode "${RES}@${HZ}"
+                    EXACTCMD="${MODEMAP[$CHOSENMODE]}"
+                    if [ -n "$EXACTCMD" ]; then
+                        wlr-randr --output "$DISPOUT" --mode "$EXACTCMD"
                     fi
                 fi
             fi

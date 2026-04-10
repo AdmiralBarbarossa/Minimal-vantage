@@ -67,7 +67,7 @@ while true; do
         WLROUT=$(wlr-randr 2>/dev/null) && HASWLR=true || true
         if [ "$HASWLR" = true ]; then
             DISPOUT=$(awk 'NR==1{print $1}' <<< "$WLROUT")
-            DISPMODE=$(awk '/current/{printf "%s @ %.0f Hz", $1, $3}' <<< "$WLROUT")
+            DISPMODE=$(awk '/current/{printf "%s @ %.0f Hz", $1, $3; exit}' <<< "$WLROUT")
             [ -z "$DISPMODE" ] && DISPMODE="Unknown"
         fi
     fi
@@ -134,10 +134,10 @@ while true; do
             STOP=$(gum input --header "Stop Threshold (1-100) | Press Esc to go back" --placeholder "Currently ${STOPCHARGE}%")
             if [ -z "$STOP" ]; then continue; fi
 
-            ERR=$( { ${SUDOCMD:+"$SUDOCMD"} "$CORE" --set-start "$START" && ${SUDOCMD:+"$SUDOCMD"} "$CORE" --set-stop "$STOP"; } 2>&1)
+            ERR=$( ${SUDOCMD:+"$SUDOCMD"} "$CORE" --set-limits "$START" "$STOP" 2>&1 )
             if [ -n "$ERR" ]; then
                 gum style --foreground "$RED" --margin "0 2" "$ERR"
-                sleep 2
+                sleep 3
             fi
             ;;
         "  Set Thermal Profile")

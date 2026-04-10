@@ -134,7 +134,7 @@ while true; do
             STOP=$(gum input --header "Stop Threshold (1-100) | Press Esc to go back" --placeholder "Currently ${STOPCHARGE}%")
             if [ -z "$STOP" ]; then continue; fi
 
-            ERR=$( { $SUDOCMD $CORE --set-start "$START" && $SUDOCMD $CORE --set-stop "$STOP"; } 2>&1)
+            ERR=$( { ${SUDOCMD:+"$SUDOCMD"} "$CORE" --set-start "$START" && ${SUDOCMD:+"$SUDOCMD"} "$CORE" --set-stop "$STOP"; } 2>&1)
             if [ -n "$ERR" ]; then
                 gum style --foreground "$RED" --margin "0 2" "$ERR"
                 sleep 2
@@ -142,7 +142,7 @@ while true; do
             ;;
         "  Set Thermal Profile")
             PROF=$(echo "$AVAILABLEPROFILES" | tr ' ' '\n' | gum choose --header "Select Thermal Profile (Esc to go back):")
-            if [ -n "$PROF" ]; then $SUDOCMD $CORE --set-profile "$PROF"; fi
+            if [ -n "$PROF" ]; then ${SUDOCMD:+"$SUDOCMD"} "$CORE" --set-profile "$PROF"; fi
             ;;
         "󰍹  Set Display Mode")
             if [ "$HASWLR" = true ]; then
@@ -150,13 +150,15 @@ while true; do
                 CHOSENMODE=$(echo "$AVAILMODES" | gum choose --header "Select Display Mode (Esc to go back):")
                 if [ -n "$CHOSENMODE" ]; then
                     read -r RES _ HZ _ <<< "$CHOSENMODE"
-                    wlr-randr --output "$DISPOUT" --mode "${RES}@${HZ}"
+                    if [[ "$RES" =~ ^[0-9]+x[0-9]+$ ]] && [[ "$HZ" =~ ^[0-9]+$ ]]; then
+                        wlr-randr --output "$DISPOUT" --mode "${RES}@${HZ}"
+                    fi
                 fi
             fi
             ;;
         "  Toggle Camera")
             CAMSTATE=$(gum choose --header "Camera Driver (Esc to go back):" "on" "off")
-            if [ -n "$CAMSTATE" ]; then $SUDOCMD $CORE --set-camera "$CAMSTATE"; fi
+            if [ -n "$CAMSTATE" ]; then ${SUDOCMD:+"$SUDOCMD"} "$CORE" --set-camera "$CAMSTATE"; fi
             ;;
         "  Toggle Microphone")
             MICSTATE=$(gum choose --header "Microphone State (Esc to go back):" "unmute (on)" "mute (off)")
@@ -165,11 +167,11 @@ while true; do
             ;;
         "  Toggle Wi-Fi")
             WIFISTATE=$(gum choose --header "Wi-Fi State (Esc to go back):" "on" "off")
-            if [ -n "$WIFISTATE" ]; then $SUDOCMD $CORE --set-wifi "$WIFISTATE"; fi
+            if [ -n "$WIFISTATE" ]; then ${SUDOCMD:+"$SUDOCMD"} "$CORE" --set-wifi "$WIFISTATE"; fi
             ;;
         "  Toggle Bluetooth")
             BTSTATE=$(gum choose --header "Bluetooth State (Esc to go back):" "on" "off")
-            if [ -n "$BTSTATE" ]; then $SUDOCMD $CORE --set-bluetooth "$BTSTATE"; fi
+            if [ -n "$BTSTATE" ]; then ${SUDOCMD:+"$SUDOCMD"} "$CORE" --set-bluetooth "$BTSTATE"; fi
             ;;
         "  Exit") clear; exit 0 ;;
     esac

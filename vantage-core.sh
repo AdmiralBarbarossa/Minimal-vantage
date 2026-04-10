@@ -26,7 +26,7 @@ saveconfig() {
         $1 == k { print k "=" v; found=1; next }
         { print }
         END { if (!found) print k "=" v }
-    ' "${CONFIG}" > "$TMPFILE" 2>/dev/null || true
+    ' < <(cat "$CONFIG" 2>/dev/null || true) > "$TMPFILE"
 
     mv "$TMPFILE" "$CONFIG"
     chmod 600 "$CONFIG"

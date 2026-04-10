@@ -20,16 +20,14 @@ saveconfig() {
     local KEY=$1; local VAL=$2
     local TMPFILE
     TMPFILE=$(mktemp) || { echo "Error: Cannot create temp file"; return 1; }
-    trap "rm -f '$TMPFILE'" EXIT
-
     awk -v k="$KEY" -v v="$VAL" -F= '
         $1 == k { print k "=" v; found=1; next }
         { print }
         END { if (!found) print k "=" v }
     ' < <(cat "$CONFIG" 2>/dev/null || true) > "$TMPFILE"
-
     mv "$TMPFILE" "$CONFIG"
-    chmod 600 "$CONFIG"
+    chmod 600 "$CONFIG"    
+    rm -f "$TMPFILE"
 }
 
 getstatus() {
@@ -95,37 +93,28 @@ getstatus() {
     echo "CAMERA=$CAMERA"
 }
 
-setstart() {
+setlimits() {
     checkroot
-    local LIMIT=$1
+    local START=$1
+    local STOP=$2
     if [ -z "$BATDIR" ] || [ ! -d "$BATDIR" ]; then exit 1; fi
-    if [[ "$LIMIT" =~ ^[0-9]+$ ]] && [ "$((10#$LIMIT))" -ge 0 ] && [ "$((10#$LIMIT))" -le 99 ]; then
-        local CURRENT_STOP
-        CURRENT_STOP=$(cat "$BATDIR/charge_control_end_threshold" 2>/dev/null || echo 100)
-        if [ "$((10#$LIMIT))" -ge "$((10#$CURRENT_STOP))" ]; then
-            echo "Error: Start threshold ($LIMIT) must be less than stop threshold ($CURRENT_STOP)."
+    if [[ "$START" =~ ^[0-9]+$ ]] && [ "$((10#$START))" -ge 0 ] && [ "$((10#$START))" -le 99 ] && \
+       [[ "$STOP" =~ ^[0-9]+$ ]] && [ "$((10#$STOP))" -ge 1 ] && [ "$((10#$STOP))" -le 100 ]; then
+        if [ "$((10#$START))" -ge "$((10#$STOP))" ]; then
+            echo "Error: Start threshold ($START) must be less than stop threshold ($STOP)."
             exit 1
         fi
-        if echo "$LIMIT" > "$BATDIR/charge_control_start_threshold" 2>/dev/null; then
-            saveconfig "STARTCHARGE" "$LIMIT"
-        fi
-    fi
-}
 
-setstop() {
-    checkroot
-    local LIMIT=$1
-    if [ -z "$BATDIR" ] || [ ! -d "$BATDIR" ]; then exit 1; fi
-    if [[ "$LIMIT" =~ ^[0-9]+$ ]] && [ "$((10#$LIMIT))" -ge 1 ] && [ "$((10#$LIMIT))" -le 100 ]; then
-        local CURRENT_START
-        CURRENT_START=$(cat "$BATDIR/charge_control_start_threshold" 2>/dev/null || echo 0)
-        if [ "$((10#$LIMIT))" -le "$((10#$CURRENT_START))" ]; then
-            echo "Error: Stop threshold ($LIMIT) must be greater than start threshold ($CURRENT_START)."
-            exit 1
+        if echo "$START" > "$BATDIR/charge_control_start_threshold" 2>/dev/null; then
+            saveconfig "STARTCHARGE" "$START"
         fi
-        if echo "$LIMIT" > "$BATDIR/charge_control_end_threshold" 2>/dev/null; then
-            saveconfig "STOPCHARGE" "$LIMIT"
+        
+        if echo "$STOP" > "$BATDIR/charge_control_end_threshold" 2>/dev/null; then
+            saveconfig "STOPCHARGE" "$STOP"
         fi
+    else
+        echo "Error: Start must be 0-99 and Stop must be 1-100."
+        exit 1
     fi
 }
 
@@ -190,8 +179,7 @@ restoresettings() {
 
 case "${1:-}" in
     --status) getstatus ;;
-    --set-start) setstart "${2:-}" ;;
-    --set-stop) setstop "${2:-}" ;;
+    --set-limits) setlimits "${2:-}" "${3:-}" ;;
     --set-profile) setprofile "${2:-}" ;;
     --set-camera) setcamera "${2:-}" ;;
     --set-wifi) setwifi "${2:-}" ;;

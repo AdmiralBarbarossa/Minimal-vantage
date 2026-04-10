@@ -16,12 +16,19 @@
 
 ## Compatibility
 
-Based on Linux kernel ACPI drivers (Kernel 5.12+) and expected to work on Lenovo hardware from **2021 onwards**, including:
+Based on Linux kernel ACPI drivers and expected to work on Lenovo hardware from **2021 onwards**, including:
 * **ThinkPad X1 Carbon** (Gen 9 through Gen 13+)
 * **ThinkPad T-Series** (T14/T14s Gen 2+)
 * **ThinkPad P-Series** (P14s, P1, etc.)
 * **ThinkPad X1 Yoga** (Gen 6+)
 * *Other modern Lenovo models utilizing the `thinkpad_acpi` driver.*
+
+| Feature | Kernel Requirement |
+|---|---|
+| Battery thresholds | 5.17+ (Intel & AMD) |
+| Thermal profiles — Intel | 5.12+ |
+| Thermal profiles — AMD | 5.18+ |
+| All other features | No specific kernel requirement |
 
 An ideal, simple, keyboard driven solution for **`wlroots`** users: remains compatible with **GNOME** and **KDE Plasma** without enforcing `wlr-randr` in Desktop Environment (DE) setups.
 
@@ -31,7 +38,7 @@ Certain features require root access; **in-menu root authentication** —includi
 
 * **Battery Conservation:** Set start/stop charging thresholds to prolong battery life with path detection.
 * **Telemetry:** Readouts of Battery Health %, Cycle Counts, and Power Draw (Watts) snapshot.
-* **Thermal/Fan Modes:** Switch between `low-power`, `balanced`, and `performance` ACPI profiles.
+* **Thermal/Fan Modes:** Switch between available ACPI platform profiles (e.g. `low-power`, `balanced`, `performance`) as exposed by the hardware.
 * **Display Control (`wlroots` only):** Adjust resolution and refresh rate via `wlr-randr`. 
 * **Microphone Privacy:** Instant audio muting via PipeWire.
 * **Radios:** Quick toggles for Wi-Fi and Bluetooth using native kernel `rfkill` without reliance on NetworkManager or BlueZ.
@@ -39,15 +46,16 @@ Certain features require root access; **in-menu root authentication** —includi
 * **Persistence:** Save settings across reboots, with a light installer that supports both `systemd` and non-systemd environments.
 
 > [!NOTE]
-> Newer ThinkPad models utilize Intel IPU6 (MIPI) architecture, and bypasses the internal USB hub; therefore, the `uvcvideo` driver may be absent, causing software toggles in this TUI to appear unresponsive. The actual switch (ThinkShutter) remains functional at the hardware level.
+> **Camera toggle** relies on the `uvcvideo` kernel module, which is only present on models with a standard USB webcam. Models that have transitioned to Intel IPU6/IPU7 MIPI cameras — including **X1 Carbon Gen 10+** and **T14/T14s Gen 4+** — do not load `uvcvideo`, so the software toggle will have no effect. The hardware ThinkShutter remains functional on all models regardless.
 
 ## Requirements
 
-* Linux kernel ACPI drivers (Kernel 5.12+)
+* Linux kernel 5.17+ recommended (see compatibility table above for per-feature minimums)
 * `gum` (The terminal UI engine)
 * A Nerd Font (e.g., `jetbrains-mono-nerd-fonts`)
 * `pipewire` / `wireplumber` (Provides `wpctl` for microphone toggling)
-* `wlr-randr` required **ONLY** for display control on wlroots compositors; likely already installed by WM users. Incompatible with most DEs. 
+* `rfkill` (ships with `util-linux`; present by default on all major distros)
+* `wlr-randr` required **ONLY** for display control on wlroots compositors; likely already installed by WM users. Incompatible with most DEs.
 
 ### Fedora
 

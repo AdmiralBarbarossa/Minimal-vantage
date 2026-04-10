@@ -20,7 +20,7 @@ saveconfig() {
     local KEY=$1; local VAL=$2
     local TMPFILE
     TMPFILE=$(mktemp) || { echo "Error: Cannot create temp file"; return 1; }
-    trap 'rm -f "$TMPFILE"' RETURN
+    trap "rm -f '$TMPFILE'" EXIT
 
     awk -v k="$KEY" -v v="$VAL" -F= '
         $1 == k { print k "=" v; found=1; next }

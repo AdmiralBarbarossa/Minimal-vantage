@@ -110,7 +110,7 @@ setstart() {
             saveconfig "STARTCHARGE" "$LIMIT"
         fi
     fi
-    }
+}
 
 setstop() {
     checkroot
@@ -127,7 +127,7 @@ setstop() {
             saveconfig "STOPCHARGE" "$LIMIT"
         fi
     fi
-    }
+}
 
 setprofile() {
     checkroot; local PROF=$1
@@ -143,29 +143,29 @@ setprofile() {
         echo "Error: Invalid profile."
         exit 1
     fi
-    }
+}
 
 setcamera() {
     checkroot
     local STATE=$1
-    if [ "$STATE" == "off" ]; then 
+    if [ "$STATE" == "off" ]; then
         modprobe -r uvcvideo 2>/dev/null || true
-    elif [ "$STATE" == "on" ]; then 
+    elif [ "$STATE" == "on" ]; then
         modprobe uvcvideo 2>/dev/null || true
     fi
-    }
+}
 
 setwifi() {
     checkroot; local STATE=$1
     if [ "$STATE" == "on" ]; then rfkill unblock wlan 2>/dev/null || true
     elif [ "$STATE" == "off" ]; then rfkill block wlan 2>/dev/null || true; fi
-    }
+}
 
 setbluetooth() {
     checkroot; local STATE=$1
     if [ "$STATE" == "on" ]; then rfkill unblock bluetooth 2>/dev/null || true
     elif [ "$STATE" == "off" ]; then rfkill block bluetooth 2>/dev/null || true; fi
-    }
+}
 
 restoresettings() {
     checkroot
@@ -186,7 +186,7 @@ restoresettings() {
             [ "$rmatch" -eq 1 ] && echo "$PROFILE" > "$PROFPAT" 2>/dev/null || true
         fi
     fi
-    }
+}
 
 case "${1:-}" in
     --status) getstatus ;;

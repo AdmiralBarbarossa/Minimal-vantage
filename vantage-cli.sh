@@ -165,11 +165,11 @@ while true; do
             ;;
         "  Toggle Wi-Fi")
             WIFISTATE=$(gum choose --header "Wi-Fi State (Esc to go back):" "on" "off")
-            if [ -n "$WIFISTATE" ]; then $SUDOCMD $CORE --set-wifi "$WIFISTATE"; fi 
+            if [ -n "$WIFISTATE" ]; then $SUDOCMD $CORE --set-wifi "$WIFISTATE"; fi
             ;;
         "  Toggle Bluetooth")
             BTSTATE=$(gum choose --header "Bluetooth State (Esc to go back):" "on" "off")
-            if [ -n "$BTSTATE" ]; then $SUDOCMD $CORE --set-bluetooth "$BTSTATE"; fi 
+            if [ -n "$BTSTATE" ]; then $SUDOCMD $CORE --set-bluetooth "$BTSTATE"; fi
             ;;
         "  Exit") clear; exit 0 ;;
     esac

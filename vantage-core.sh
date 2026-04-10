@@ -41,8 +41,14 @@ getstatus() {
         BATSTATUS=$(cat "$BATDIR/status" 2>/dev/null || echo "N/A")
 
         if [ -f "$BATDIR/energy_full_design" ] && [ -f "$BATDIR/energy_full" ]; then
-            BATHEALTH=$(( $(cat "$BATDIR/energy_full" 2>/dev/null || echo 0) * 100 / $(cat "$BATDIR/energy_full_design" 2>/dev/null || echo 1) ))
-        else 
+            _EF=$(cat "$BATDIR/energy_full" 2>/dev/null || echo 0)
+            _EFD=$(cat "$BATDIR/energy_full_design" 2>/dev/null || echo 0)
+            if [ "$_EFD" -gt 0 ]; then
+                BATHEALTH=$(( _EF * 100 / _EFD ))
+            else
+                BATHEALTH="N/A"
+            fi
+        else
             BATHEALTH="N/A"
         fi
         if [ -f "$BATDIR/power_now" ]; then
@@ -175,7 +181,7 @@ restoresettings() {
         if [ -n "$PROFILE" ] && [ -f "$PROFOPT" ]; then
             local rmatch=0
             local rallowed
-            rallowed=$(cat "$PROFOPT" 2>/dev/null || echo "")
+            rallowed=$(cat "$PROFOPT")
             for p in $rallowed; do [ "$p" = "$PROFILE" ] && rmatch=1 && break; done
             [ "$rmatch" -eq 1 ] && echo "$PROFILE" > "$PROFPAT" 2>/dev/null || true
         fi

@@ -18,8 +18,6 @@ for tool in gum rfkill wpctl; do
     fi
 done
 
-#CORE="./vantage-core.sh"
-
 CORE="/usr/local/bin/vantage-core"
 if [ ! -x "$CORE" ]; then
     echo "Error: Backend not found or not executable at $CORE."
@@ -47,6 +45,7 @@ while true; do
         exit 1
     fi
 
+    unset SYS_STATUS
     declare -A SYS_STATUS
     while IFS='=' read -r KEY VAL; do
         if [[ "$KEY" =~ ^[A-Z]+$ ]]; then
@@ -64,11 +63,13 @@ while true; do
     else BTSTATUS="on"; fi
 
     HASWLR=false
-    if command -v wlr-randr &> /dev/null && wlr-randr &> /dev/null; then
-        HASWLR=true
-        DISPOUT=$(wlr-randr | head -n 1 | awk '{print $1}')
-        DISPMODE=$(wlr-randr | grep current | awk '{printf "%s @ %.0f Hz", $1, $3}')
-        [ -z "$DISPMODE" ] && DISPMODE="Unknown"
+    if command -v wlr-randr &> /dev/null; then
+        WLROUT=$(wlr-randr 2>/dev/null) && HASWLR=true || true
+        if [ "$HASWLR" = true ]; then
+            DISPOUT=$(awk 'NR==1{print $1}' <<< "$WLROUT")
+            DISPMODE=$(awk '/current/{printf "%s @ %.0f Hz", $1, $3}' <<< "$WLROUT")
+            [ -z "$DISPMODE" ] && DISPMODE="Unknown"
+        fi
     fi
 
     clear
@@ -145,12 +146,10 @@ while true; do
             ;;
         "󰍹  Set Display Mode")
             if [ "$HASWLR" = true ]; then
-                AVAILMODES=$(wlr-randr | grep 'px,' | awk '{printf "%s @ %.0f Hz\n", $1, $3}' | sort -ur)
+                AVAILMODES=$(awk '/px,/{printf "%s @ %.0f Hz\n", $1, $3}' <<< "$WLROUT" | sort -ur)
                 CHOSENMODE=$(echo "$AVAILMODES" | gum choose --header "Select Display Mode (Esc to go back):")
-                
                 if [ -n "$CHOSENMODE" ]; then
-                    RES=$(echo "$CHOSENMODE" | awk '{print $1}')
-                    HZ=$(echo "$CHOSENMODE" | awk '{print $3}')
+                    read -r RES _ HZ _ <<< "$CHOSENMODE"
                     wlr-randr --output "$DISPOUT" --mode "${RES}@${HZ}"
                 fi
             fi

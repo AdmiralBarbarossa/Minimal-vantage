@@ -18,18 +18,18 @@ checkroot() {
 
 saveconfig() {
     local KEY=$1; local VAL=$2
-    [ ! -e "$CONFIG" ] && touch "$CONFIG"
     local TMPFILE
-    TMPFILE=$(mktemp /etc/vantage.XXXXXX)
+    TMPFILE=$(mktemp) || { echo "Error: Cannot create temp file"; return 1; }
+    trap 'rm -f "$TMPFILE"' RETURN
 
     awk -v k="$KEY" -v v="$VAL" -F= '
         $1 == k { print k "=" v; found=1; next }
         { print }
         END { if (!found) print k "=" v }
-    ' "$CONFIG" > "$TMPFILE"
+    ' "${CONFIG}" > "$TMPFILE" 2>/dev/null || true
 
     mv "$TMPFILE" "$CONFIG"
-    chmod 600 "$CONFIG" 
+    chmod 600 "$CONFIG"
 }
 
 getstatus() {

@@ -6,7 +6,7 @@ SYSTEMD_DIR ?= $(SYSCONFDIR)/systemd/system
 .PHONY: install uninstall
 
 install:
-	@echo "Installing Minimal-vantage..."
+	@echo "Installing Minimal-Vantage..."
 	install -d $(DESTDIR)$(BINDIR)
 	install -m 755 vantage-core.sh $(DESTDIR)$(BINDIR)/vantage-core
 	install -m 755 vantage-cli.sh $(DESTDIR)$(BINDIR)/vantage

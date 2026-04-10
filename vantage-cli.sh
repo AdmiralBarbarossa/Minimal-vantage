@@ -130,11 +130,14 @@ while true; do
         "  Set Battery Limits")
             START=$(gum input --header "Start Threshold (0-99) | Press Esc to go back" --placeholder "Currently ${STARTCHARGE}%")
             if [ -z "$START" ]; then continue; fi
-            $SUDOCMD $CORE --set-start "$START"
-            
             STOP=$(gum input --header "Stop Threshold (1-100) | Press Esc to go back" --placeholder "Currently ${STOPCHARGE}%")
             if [ -z "$STOP" ]; then continue; fi
-            $SUDOCMD $CORE --set-stop "$STOP"
+
+            ERR=$( { $SUDOCMD $CORE --set-start "$START" && $SUDOCMD $CORE --set-stop "$STOP"; } 2>&1)
+            if [ -n "$ERR" ]; then
+                gum style --foreground "$RED" --margin "0 2" "$ERR"
+                sleep 2
+            fi
             ;;
         "  Set Thermal Profile")
             PROF=$(echo "$AVAILABLEPROFILES" | tr ' ' '\n' | gum choose --header "Select Thermal Profile (Esc to go back):")

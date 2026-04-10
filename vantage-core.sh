@@ -20,7 +20,7 @@ saveconfig() {
     local KEY=$1; local VAL=$2
     [ ! -e "$CONFIG" ] && touch "$CONFIG"
     local TMPFILE
-    TMPFILE=$(mktemp /tmp/vantage.XXXXXX)
+    TMPFILE=$(mktemp /etc/vantage.XXXXXX)
 
     awk -v k="$KEY" -v v="$VAL" -F= '
         $1 == k { print k "=" v; found=1; next }
@@ -50,7 +50,7 @@ getstatus() {
             if [ "$POWERUW" -eq 0 ]; then 
                 BATPOWER="0.0W (Plugged in)"
             else 
-                BATPOWER=$(awk "BEGIN {printf \"%.1fW\", $POWERUW / 1000000}")
+                BATPOWER=$(awk -v p="$POWERUW" 'BEGIN {printf "%.1fW", p / 1000000}')
             fi
         else 
             BATPOWER="N/A"
@@ -71,9 +71,9 @@ getstatus() {
         PLATFORMPROFILE="Unsupported"
         AVAILABLEPROFILES="Unsupported"
     fi
-    if lsmod | grep -q "^uvcvideo" || true; then 
+    if lsmod | grep -q "^uvcvideo"; then
         CAMERA="on"
-    else 
+    else
         CAMERA="off"
     fi
 
@@ -94,6 +94,12 @@ setstart() {
     local LIMIT=$1
     if [ -z "$BATDIR" ] || [ ! -d "$BATDIR" ]; then exit 1; fi
     if [[ "$LIMIT" =~ ^[0-9]+$ ]] && [ "$((10#$LIMIT))" -ge 0 ] && [ "$((10#$LIMIT))" -le 99 ]; then
+        local CURRENT_STOP
+        CURRENT_STOP=$(cat "$BATDIR/charge_control_end_threshold" 2>/dev/null || echo 100)
+        if [ "$((10#$LIMIT))" -ge "$((10#$CURRENT_STOP))" ]; then
+            echo "Error: Start threshold ($LIMIT) must be less than stop threshold ($CURRENT_STOP)."
+            exit 1
+        fi
         if echo "$LIMIT" > "$BATDIR/charge_control_start_threshold" 2>/dev/null; then
             saveconfig "STARTCHARGE" "$LIMIT"
         fi
@@ -105,6 +111,12 @@ setstop() {
     local LIMIT=$1
     if [ -z "$BATDIR" ] || [ ! -d "$BATDIR" ]; then exit 1; fi
     if [[ "$LIMIT" =~ ^[0-9]+$ ]] && [ "$((10#$LIMIT))" -ge 1 ] && [ "$((10#$LIMIT))" -le 100 ]; then
+        local CURRENT_START
+        CURRENT_START=$(cat "$BATDIR/charge_control_start_threshold" 2>/dev/null || echo 0)
+        if [ "$((10#$LIMIT))" -le "$((10#$CURRENT_START))" ]; then
+            echo "Error: Stop threshold ($LIMIT) must be greater than start threshold ($CURRENT_START)."
+            exit 1
+        fi
         if echo "$LIMIT" > "$BATDIR/charge_control_end_threshold" 2>/dev/null; then
             saveconfig "STOPCHARGE" "$LIMIT"
         fi
@@ -115,7 +127,9 @@ setprofile() {
     checkroot; local PROF=$1
     local ALLOWED
     ALLOWED=$(cat "$PROFOPT" 2>/dev/null || echo "")
-    if [[ " $ALLOWED " =~ " $PROF " ]]; then
+    local match=0
+    for p in $ALLOWED; do [ "$p" = "$PROF" ] && match=1 && break; done
+    if [ "$match" -eq 1 ]; then
         if echo "$PROF" > "$PROFPAT" 2>/dev/null; then
             saveconfig "PROFILE" "$PROF"
         fi
@@ -155,10 +169,16 @@ restoresettings() {
         PROFILE=$(grep -E "^PROFILE=" "$CONFIG" | cut -d'=' -f2 || echo "")
 
         if [ -n "$BATDIR" ] && [ -d "$BATDIR" ]; then
-            [ -n "$STARTCHARGE" ] && echo "$STARTCHARGE" > "$BATDIR/charge_control_start_threshold" 2>/dev/null || true
-            [ -n "$STOPCHARGE" ] && echo "$STOPCHARGE" > "$BATDIR/charge_control_end_threshold" 2>/dev/null || true
+            [[ "$STARTCHARGE" =~ ^[0-9]+$ ]] && echo "$STARTCHARGE" > "$BATDIR/charge_control_start_threshold" 2>/dev/null || true
+            [[ "$STOPCHARGE" =~ ^[0-9]+$ ]] && echo "$STOPCHARGE" > "$BATDIR/charge_control_end_threshold" 2>/dev/null || true
         fi
-        [ -n "$PROFILE" ] && echo "$PROFILE" > "$PROFPAT" 2>/dev/null || true
+        if [ -n "$PROFILE" ] && [ -f "$PROFOPT" ]; then
+            local rmatch=0
+            local rallowed
+            rallowed=$(cat "$PROFOPT" 2>/dev/null || echo "")
+            for p in $rallowed; do [ "$p" = "$PROFILE" ] && rmatch=1 && break; done
+            [ "$rmatch" -eq 1 ] && echo "$PROFILE" > "$PROFPAT" 2>/dev/null || true
+        fi
     fi
     }
 

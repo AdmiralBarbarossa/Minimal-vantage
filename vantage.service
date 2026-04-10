@@ -10,6 +10,7 @@ RemainAfterExit=yes
 ProtectHome=yes
 ProtectSystem=full
 NoNewPrivileges=yes
+PrivateTmp=yes
 
 [Install]
 WantedBy=multi-user.target

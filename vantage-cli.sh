@@ -85,8 +85,22 @@ while true; do
     PLATFORMPROFILE=${SYS_STATUS["PLATFORMPROFILE"]:-"Unknown"}
     AVAILABLEPROFILES=${SYS_STATUS["AVAILABLEPROFILES"]:-""}
     CAMERA=${SYS_STATUS["CAMERA"]:-"Unknown"}
+    CONSERVMODE=${SYS_STATUS["CONSERVMODE"]:-"Unsupported"}
 
-    STATUSTEXT="  Battery Limits : Start: ${STARTCHARGE}% | Stop: ${STOPCHARGE}%
+    HASLIMITS=false
+    HASCONSERVATION=false
+    [ "$STARTCHARGE" != "Unsupported" ] && [ "$STOPCHARGE" != "Unsupported" ] && HASLIMITS=true
+    [ "$CONSERVMODE" != "Unsupported" ] && HASCONSERVATION=true
+
+    if [ "$HASLIMITS" = true ]; then
+        BATLIMITTEXT="Start: ${STARTCHARGE}% | Stop: ${STOPCHARGE}%"
+    elif [ "$HASCONSERVATION" = true ]; then
+        BATLIMITTEXT="Conservation Mode: ${CONSERVMODE}"
+    else
+        BATLIMITTEXT="Unsupported"
+    fi
+
+    STATUSTEXT="  Battery Limits : $BATLIMITTEXT
   Battery Stats  : ${BATCAPACITY}% (${BATSTATUS}) | Health: ${BATHEALTH}% | Cycles: ${CYCLECOUNT}
   Power Draw     : $BATPOWER
   Thermal Mode   : $PLATFORMPROFILE"
@@ -129,15 +143,19 @@ while true; do
 
     case "$CHOICE" in
         "  Set Battery Limits")
-            START=$(gum input --header "Start Threshold (0-99) | Press Esc to go back" --placeholder "Currently ${STARTCHARGE}%")
-            if [ -z "$START" ]; then continue; fi
-            STOP=$(gum input --header "Stop Threshold (1-100) | Press Esc to go back" --placeholder "Currently ${STOPCHARGE}%")
-            if [ -z "$STOP" ]; then continue; fi
-
-            ERR=$( ${SUDOCMD:+"$SUDOCMD"} "$CORE" --set-limits "$START" "$STOP" 2>&1 )
-            if [ -n "$ERR" ]; then
-                gum style --foreground "$RED" --margin "0 2" "$ERR"
-                sleep 3
+            if [ "$HASLIMITS" = true ]; then
+                START=$(gum input --header "Start Threshold (0-99) | Press Esc to go back" --placeholder "Currently ${STARTCHARGE}%")
+                if [ -z "$START" ]; then continue; fi
+                STOP=$(gum input --header "Stop Threshold (1-100) | Press Esc to go back" --placeholder "Currently ${STOPCHARGE}%")
+                if [ -z "$STOP" ]; then continue; fi
+                ERR=$( ${SUDOCMD:+"$SUDOCMD"} "$CORE" --set-limits "$START" "$STOP" 2>&1 )
+                if [ -n "$ERR" ]; then
+                    gum style --foreground "$RED" --margin "0 2" "$ERR"
+                    sleep 3
+                fi
+            elif [ "$HASCONSERVATION" = true ]; then
+                CONSMODE=$(gum choose --header "Conservation Mode (Esc to go back):" "on" "off")
+                if [ -n "$CONSMODE" ]; then ${SUDOCMD:+"$SUDOCMD"} "$CORE" --set-conservation "$CONSMODE"; fi
             fi
             ;;
         "  Set Thermal Profile")

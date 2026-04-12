@@ -1,5 +1,5 @@
 #!/bin/bash
-# vantage-core.sh 
+# vantage-core.sh
 
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 set -euo pipefail
@@ -9,8 +9,10 @@ PROFOPT="/sys/firmware/acpi/platform_profile_choices"
 CONFIG="/etc/vantage.conf"
 shopt -s nullglob
 BATS=(/sys/class/power_supply/BAT*)
+VPCS=(/sys/bus/platform/devices/VPC2004:*/)
 shopt -u nullglob
 BATDIR="${BATS[0]:-}"
+VPCDIR="${VPCS[0]:-}"
 
 checkroot() {
     if [ "$EUID" -ne 0 ]; then echo "Error: Requires root (sudo)."; exit 1; fi
@@ -49,15 +51,18 @@ getstatus() {
         else
             BATHEALTH="N/A"
         fi
-        if [ -f "$BATDIR/power_now" ]; then
-            POWERUW=$(cat "$BATDIR/power_now" 2>/dev/null || echo 0)
-            if [ "$POWERUW" -eq 0 ]; then 
+        POWERUW=$(cat "$BATDIR/power_now" 2>/dev/null || echo 0)
+        if [ "$POWERUW" -gt 0 ]; then
+            BATPOWER=$(awk -v p="$POWERUW" 'BEGIN {printf "%.1fW", p / 1000000}')
+        else
+            local CURUA VOLTUV
+            CURUA=$(cat "$BATDIR/current_now" 2>/dev/null || echo 0)
+            VOLTUV=$(cat "$BATDIR/voltage_now" 2>/dev/null || echo 0)
+            if [ "$CURUA" -gt 0 ] && [ "$VOLTUV" -gt 0 ]; then
+                BATPOWER=$(awk -v c="$CURUA" -v v="$VOLTUV" 'BEGIN {printf "%.1fW", (c * v) / 1000000000000}')
+            else
                 BATPOWER="0.0W (Plugged in)"
-            else 
-                BATPOWER=$(awk -v p="$POWERUW" 'BEGIN {printf "%.1fW", p / 1000000}')
             fi
-        else 
-            BATPOWER="N/A"
         fi
     else
         STARTCHARGE="Error"
@@ -81,6 +86,16 @@ getstatus() {
         CAMERA="off"
     fi
 
+    if [ -n "$VPCDIR" ] && [ -f "${VPCDIR}conservation_mode" ]; then
+        local CVAL
+        CVAL=$(cat "${VPCDIR}conservation_mode" 2>/dev/null || echo "")
+        if [ "$CVAL" = "1" ]; then CONSERVMODE="on"
+        elif [ "$CVAL" = "0" ]; then CONSERVMODE="off"
+        else CONSERVMODE="unknown"; fi
+    else
+        CONSERVMODE="Unsupported"
+    fi
+
     echo "STARTCHARGE=$STARTCHARGE"
     echo "STOPCHARGE=$STOPCHARGE"
     echo "CYCLECOUNT=$CYCLECOUNT"
@@ -91,6 +106,7 @@ getstatus() {
     echo "PLATFORMPROFILE=$PLATFORMPROFILE"
     echo "AVAILABLEPROFILES=$AVAILABLEPROFILES"
     echo "CAMERA=$CAMERA"
+    echo "CONSERVMODE=$CONSERVMODE"
 }
 
 setlimits() {
@@ -144,6 +160,25 @@ setcamera() {
     fi
 }
 
+setconservation() {
+    checkroot
+    local STATE=$1
+    if [ -z "$VPCDIR" ] || [ ! -f "${VPCDIR}conservation_mode" ]; then
+        echo "Error: Conservation mode not supported on this hardware."
+        exit 1
+    fi
+    if [ "$STATE" == "on" ]; then
+        echo "1" > "${VPCDIR}conservation_mode" || { echo "Error: Failed to enable conservation mode."; exit 1; }
+        saveconfig "CONSERVMODE" "on"
+    elif [ "$STATE" == "off" ]; then
+        echo "0" > "${VPCDIR}conservation_mode" || { echo "Error: Failed to disable conservation mode."; exit 1; }
+        saveconfig "CONSERVMODE" "off"
+    else
+        echo "Error: Invalid state. Use 'on' or 'off'."
+        exit 1
+    fi
+}
+
 setwifi() {
     checkroot; local STATE=$1
     if [ "$STATE" == "on" ]; then rfkill unblock wlan 2>/dev/null || true
@@ -174,6 +209,14 @@ restoresettings() {
             for p in $rallowed; do [ "$p" = "$PROFILE" ] && rmatch=1 && break; done
             [ "$rmatch" -eq 1 ] && echo "$PROFILE" > "$PROFPAT" 2>/dev/null || true
         fi
+
+        local CONSERVMODESAVED
+        CONSERVMODESAVED=$(grep -E "^CONSERVMODE=" "$CONFIG" | cut -d'=' -f2 || echo "")
+        if [ -n "$CONSERVMODESAVED" ] && [ -n "$VPCDIR" ] && [ -f "${VPCDIR}conservation_mode" ]; then
+            if [ "$CONSERVMODESAVED" = "on" ]; then echo "1" > "${VPCDIR}conservation_mode" 2>/dev/null || true
+            elif [ "$CONSERVMODESAVED" = "off" ]; then echo "0" > "${VPCDIR}conservation_mode" 2>/dev/null || true
+            fi
+        fi
     fi
 }
 
@@ -182,6 +225,7 @@ case "${1:-}" in
     --set-limits) setlimits "${2:-}" "${3:-}" ;;
     --set-profile) setprofile "${2:-}" ;;
     --set-camera) setcamera "${2:-}" ;;
+    --set-conservation) setconservation "${2:-}" ;;
     --set-wifi) setwifi "${2:-}" ;;
     --set-bluetooth) setbluetooth "${2:-}" ;;
     --restore) restoresettings ;;

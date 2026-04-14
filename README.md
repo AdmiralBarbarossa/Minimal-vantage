@@ -39,14 +39,15 @@ Certain features require root access; **in-menu root authentication** —includi
 * **Battery Conservation:** Set start/stop charging thresholds to prolong battery life with path detection.
 * **Telemetry:** Readouts of Battery Health %, Cycle Counts, and Power Draw (Watts) snapshot.
 * **Thermal/Fan Modes:** Switch between available ACPI platform profiles (e.g. `low-power`, `balanced`, `performance`) as exposed by the hardware.
-* **Display Control (`wlroots` only):** Adjust resolution and refresh rate via `wlr-randr`. 
-* **Microphone Privacy:** Instant audio muting via PipeWire.
+* **Display Control (`wlroots` only):** Adjust resolution and refresh rate per monitor via `wlr-randr` (inc. external displays).
+<!-- note: when multiple modes at the same resolution round to the same Hz (e.g. 60.000 and 59.940 → "60 Hz"), all colliders are relabelled with 2 decimal precision (60.00 / 59.94 Hz). Intentional — not a bug. -->
+* **Microphone Privacy:** Per-source mute toggle via PipeWire; automatically enumerates all audio inputs including external USB mics; filters out non-audio capture nodes.
 * **Radios:** Quick toggles for Wi-Fi and Bluetooth using native kernel `rfkill` without reliance on NetworkManager or BlueZ.
-* **Camera Privacy:** Attempts to load/unload the standard webcam kernel module.
+* **Camera Privacy:** Per-device enable/disable by binding or unbinding the kernel driver; supports multiple cameras (e.g. built-in + monitor webcam); compatible with Secure Boot.
 * **Persistence:** Save settings across reboots, with a light installer that supports both `systemd` and non-systemd environments.
 
 > [!NOTE]
-> **Camera toggle** relies on the `uvcvideo` kernel module, which is only present on models with a standard USB webcam. Models that have transitioned to Intel IPU6/IPU7 MIPI cameras — including **X1 Carbon Gen 10+** and **T14/T14s Gen 4+** — do not load `uvcvideo`, so the software toggle will have no effect. The hardware ThinkShutter remains functional on all models regardless.
+> **Camera toggle** requires `uvcvideo`, present only on models with a standard USB webcam. Models with Intel IPU6/IPU7 MIPI cameras — such as certain **X1 Carbon Gen 10–12** and **T14/T14s Gen 3–4** variants — do not load `uvcvideo`; the toggle will have no effect. The physical lens cover found on many ThinkPads is a mechanical-only accessory with no system connection; it operates independently of this software toggle.
 
 ## Requirements
 
@@ -65,7 +66,7 @@ unzip JetBrainsMono.zip -d ~/.local/share/fonts
 fc-cache -fv
 rm JetBrainsMono.zip
 
-sudo dnf install gum pipewire
+sudo dnf install gum pipewire wireplumber
 ```
 
 ### Arch
